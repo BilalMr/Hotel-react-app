@@ -1,5 +1,6 @@
 import React, { Component } from "react";
-import items from "./data";
+// import items from "./data";
+import Client from "./Contentful";
 
 // Setup the context api
 const RoomContext = React.createContext();
@@ -24,20 +25,33 @@ class RoomProvider extends Component {
     pets: false,
   };
 
+  // Get Data
+  getData = async () => {
+    try {
+      let response = await Client.getEntries({
+        content_type: "beachResortRoom",
+        // order: "sys.createdAt",
+        order: "-fields.price",
+      });
+      let rooms = this.formatData(response.items);
+      let featuredRooms = rooms.filter((room) => room.featured === true);
+      let maxPrice = Math.max(...rooms.map((room) => room.price));
+      let maxSize = Math.max(...rooms.map((room) => room.size));
+      this.setState({
+        rooms,
+        sortedRooms: rooms,
+        featuredRooms,
+        loading: false,
+        maxPrice,
+        maxSize,
+        price: maxPrice,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
   componentDidMount() {
-    let rooms = this.formatData(items);
-    let featuredRooms = rooms.filter((room) => room.featured === true);
-    let maxPrice = Math.max(...rooms.map((room) => room.price));
-    let maxSize = Math.max(...rooms.map((room) => room.size));
-    this.setState({
-      rooms,
-      sortedRooms: rooms,
-      featuredRooms,
-      loading: false,
-      maxPrice,
-      maxSize,
-      price: maxPrice,
-    });
+    this.getData();
   }
   // Format data which come from the data.js or the contentful.
   formatData = (items) => {
@@ -47,7 +61,7 @@ class RoomProvider extends Component {
       let room = { ...item.fields, images, id };
       return room;
     });
-    console.log(tempItems);
+    // console.log(tempItems);
     return tempItems;
   };
 
@@ -78,8 +92,8 @@ class RoomProvider extends Component {
       type,
       capacity,
       price,
-      maxPrice,
-      minPrice,
+      // maxPrice,
+      // minPrice,
       minSize,
       maxSize,
       breakfast,
@@ -126,8 +140,7 @@ class RoomProvider extends Component {
           ...this.state,
           getRoom: this.getRoom,
           handleChange: this.handleChange,
-        }}
-      >
+        }}>
         {this.props.children}
       </RoomContext.Provider>
     );
